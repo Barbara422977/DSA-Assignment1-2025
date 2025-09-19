@@ -1,0 +1,194 @@
+syntax = "proto3";
+
+package car_rental;
+
+// Car Rental Service Definition
+service CarRentalService {
+    // Admin operations
+    rpc AddCar(Car) returns (AddCarResponse);
+    rpc CreateUsers(stream User) returns (CreateUsersResponse);
+    rpc UpdateCar(UpdateCarRequest) returns (UpdateCarResponse);
+    rpc RemoveCar(RemoveCarRequest) returns (RemoveCarResponse);
+    rpc ListAllReservations(ListReservationsRequest) returns (stream Reservation);
+    
+    // Customer operations
+    rpc ListAvailableCars(ListAvailableCarsRequest) returns (stream Car);
+    rpc SearchCar(SearchCarRequest) returns (SearchCarResponse);
+    rpc AddToCart(AddToCartRequest) returns (AddToCartResponse);
+    rpc PlaceReservation(PlaceReservationRequest) returns (PlaceReservationResponse);
+    rpc GetCart(GetCartRequest) returns (GetCartResponse);
+}
+
+// Enums
+enum CarStatus {
+    AVAILABLE = 0;
+    UNAVAILABLE = 1;
+    RENTED = 2;
+    MAINTENANCE = 3;
+}
+
+enum UserRole {
+    CUSTOMER = 0;
+    ADMIN = 1;
+}
+
+enum ReservationStatus {
+    PENDING = 0;
+    CONFIRMED = 1;
+    CANCELLED = 2;
+    COMPLETED = 3;
+}
+
+// Core entities
+message Car {
+    string plate = 1;           // Unique identifier (number plate)
+    string make = 2;            // Car manufacturer
+    string model = 3;           // Car model
+    int32 year = 4;             // Manufacturing year
+    double daily_price = 5;     // Daily rental price
+    int32 mileage = 6;          // Current mileage
+    CarStatus status = 7;       // Current status
+    string description = 8;     // Additional description for better system quality
+    string color = 9;           // Car color - additional field
+    string fuel_type = 10;      // Fuel type - additional field
+}
+
+message User {
+    string user_id = 1;         // Unique user identifier
+    string name = 2;            // Full name
+    string email = 3;           // Email address
+    string phone = 4;           // Phone number
+    UserRole role = 5;          // User role (Customer/Admin)
+    string address = 6;         // Address - additional field
+    string license_number = 7;  // Driver's license - additional field
+    int32 age = 8;              // Age - additional field
+}
+
+message CartItem {
+    string plate = 1;           // Car plate number
+    string start_date = 2;      // Rental start date (YYYY-MM-DD format)
+    string end_date = 3;        // Rental end date (YYYY-MM-DD format)
+    double calculated_price = 4; // Pre-calculated total price
+    int32 rental_days = 5;      // Number of rental days
+    string car_make = 6;        // Car make for display - additional field
+    string car_model = 7;       // Car model for display - additional field
+}
+
+message Reservation {
+    string reservation_id = 1;   // Unique reservation identifier
+    string customer_id = 2;      // Customer user ID
+    string plate = 3;            // Car plate number
+    string start_date = 4;       // Rental start date
+    string end_date = 5;         // Rental end date
+    double total_price = 6;      // Total rental price
+    ReservationStatus status = 7; // Reservation status
+    string created_at = 8;       // Creation timestamp
+    int32 rental_days = 9;       // Number of rental days
+    string customer_name = 10;   // Customer name for display - additional field
+    string car_info = 11;        // Car make/model info - additional field
+}
+
+// Request/Response messages for Admin operations
+message AddCarResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    string car_id = 3;          // Returns the car plate as ID
+}
+
+message CreateUsersResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    int32 users_created = 3;    // Number of users successfully created
+    repeated string user_ids = 4; // List of created user IDs - additional field
+}
+
+message UpdateCarRequest {
+    string plate = 1;           // Car plate to update
+    Car updated_car = 2;        // Updated car information
+}
+
+message UpdateCarResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    Car updated_car = 3;        // The updated car details
+}
+
+message RemoveCarRequest {
+    string plate = 1;           // Plate of car to remove
+    string admin_id = 2;        // Admin ID for authorization - additional field
+}
+
+message RemoveCarResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    repeated Car remaining_cars = 3; // Full list of remaining cars in catalog
+    int32 total_cars = 4;       // Total number of remaining cars - additional field
+}
+
+message ListReservationsRequest {
+    string admin_id = 1;        // Admin ID for authorization
+    string filter_status = 2;   // Optional status filter - additional field
+    string start_date = 3;      // Optional date range start - additional field
+    string end_date = 4;        // Optional date range end - additional field
+}
+
+// Request/Response messages for Customer operations
+message ListAvailableCarsRequest {
+    string customer_id = 1;     // Customer ID
+    string filter_text = 2;     // Optional text filter (make, model, description)
+    int32 filter_year = 3;      // Optional year filter
+    double max_price = 4;       // Optional maximum daily price filter - additional field
+    string fuel_type = 5;       // Optional fuel type filter - additional field
+}
+
+message SearchCarRequest {
+    string plate = 1;           // Car plate to search for
+    string customer_id = 2;     // Customer ID making the request
+}
+
+message SearchCarResponse {
+    bool found = 1;             // Whether car was found
+    bool available = 2;         // Whether car is available for rent
+    Car car = 3;                // Car details if found
+    string message = 4;         // Response message
+    repeated string unavailable_dates = 5; // Dates when car is not available - additional field
+}
+
+message AddToCartRequest {
+    string customer_id = 1;     // Customer ID
+    string plate = 2;           // Car plate to add
+    string start_date = 3;      // Rental start date (YYYY-MM-DD)
+    string end_date = 4;        // Rental end date (YYYY-MM-DD)
+}
+
+message AddToCartResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    CartItem cart_item = 3;     // The added cart item details
+    int32 cart_size = 4;        // Current cart size - additional field
+}
+
+message PlaceReservationRequest {
+    string customer_id = 1;     // Customer ID
+    string payment_method = 2;  // Payment method - additional field
+    string special_requests = 3; // Special requests - additional field
+}
+
+message PlaceReservationResponse {
+    bool success = 1;           // Operation success status
+    string message = 2;         // Response message
+    repeated Reservation reservations = 3; // Created reservations
+    double total_amount = 4;    // Total amount for all reservations
+    string confirmation_number = 5; // Overall confirmation number - additional field
+}
+
+message GetCartRequest {
+    string customer_id = 1;     // Customer ID
+}
+
+message GetCartResponse {
+    repeated CartItem items = 1; // Items in the cart
+    double total_estimated_price = 2; // Total estimated price
+    int32 total_days = 3;       // Total rental days across all items - additional field
+    bool has_conflicts = 4; 
+} 
