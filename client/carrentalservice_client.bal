@@ -326,6 +326,7 @@ public type addToCartRequest record {
     string end_date;
 };
 
+/#
 public type addToCartResponse record {
     boolean success;
     string message;
